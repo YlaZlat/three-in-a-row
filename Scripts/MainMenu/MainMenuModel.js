@@ -1,29 +1,32 @@
 const MainMenuModel = cc.Class({
 
-    ctor: function (controller, viev) {
-        this.viev = viev;
-        this.controller = controller;
-        this.fieldModel = this.controller.fieldModel;
-        this.passingModel = this.controller.passingModel;
-    },
-init(){},
+  ctor: function (controller, view) {
+    this.view = view;
+    this.controller = controller;
+    this.state = this.controller.state.mainMenu;
+    this.fieldModel = this.controller.fieldModel;
+    this.passingModel = this.controller.passingModel;
+  },
+  init() {},
 
-   enable () {
-        this.viev.enable();
-        this.setLevelInformation();
-    },
+  enable() {
+    this.view.enable();
+    this.onEvent();
+  },
 
-    disable () {
-        this.viev.disable();
-    },
+  disable() {
+    this.view.disable();
+  },
 
-    setLevelInformation(){
-        let level = this.passingModel.level;
-        let goalColor = this.passingModel.collectChipsColor;
-        let requiredLevelScore = this.passingModel.requiredLevelScore
-        let levelMovies = this.passingModel.levelMovies;
-        this.viev.displaylevelInformation(level, requiredLevelScore, goalColor, levelMovies);
-    }
+  onEvent() {
+    this.view.playButton.node.on(this.controller.cursorEvents.click, this.onButtonPlay, this);
+  }, 
+
+  onButtonPlay() {
+    this.disable();
+    this.controller.onNextLevelMenu();
+  },
+  
 });
 
 module.exports = MainMenuModel;

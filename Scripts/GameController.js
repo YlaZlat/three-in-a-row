@@ -1,332 +1,307 @@
-const FieldModel = require('FieldModel');
-const FieldActions = require('FieldActions');
-const FieldViev = require('FieldViev');
-const BackGround = require('BackGround');
+const FieldModel = require("FieldModel");
+const FieldActions = require("FieldActions");
+const FieldView = require("FieldView");
+const BackGround = require("BackGround");
 
-const PassingModel = require('PassingModel');
-const PassingViev = require('PassingViev');
+const PassingModel = require("PassingModel");
+const PassingView = require("PassingView");
 
-const MainMenuViev = require('MainMenuViev');
-const MainMenuModel = require('MainMenuModel');
+const MainMenuView = require("MainMenuView");
+const MainMenuModel = require("MainMenuModel");
 
-const GameOverMenuViev = require('GameOverMenuViev');
-const GameOverMenuModel = require('GameOverMenuModel');
+const GameOverMenuView = require("GameOverMenuView");
+const GameOverMenuModel = require("GameOverMenuModel");
 
-const NextLevelMenuViev = require('NextLevelMenuViev');
-const NextLevelMenuModel = require('NextLevelMenuModel'); 
+const NextLevelMenuView = require("NextLevelMenuView");
+const NextLevelMenuModel = require("NextLevelMenuModel");
 
-const WinMenuViev = require('WinMenuViev');
-const WinMenuModel = require('WinMenuModel');
+const WinMenuView = require("WinMenuView");
+const WinMenuModel = require("WinMenuModel");
 
+const GameStates = require("GameStates");
 
 cc.Class({
-    extends: cc.Component,
-   
-    properties: {
-       
-        fieldViev: {
-            default: null,
-            type: FieldViev 
-        }, 
+  extends: cc.Component,
 
-        backGround: {
-            default: null,
-            type: BackGround
-        },
+  properties: {
 
-        passingViev: {
-            default: null,
-            type: PassingViev 
-        }, 
-
-        mainMenuViev: {
-            default: null,
-            type: MainMenuViev 
-        },
-
-        gameOverMenuViev: {
-            default: null,
-            type: GameOverMenuViev 
-        },
-
-        nextLevelMenuViev: {
-            default: null,
-            type: NextLevelMenuViev
-        },
-
-        winMenuViev: {
-            default: null,
-            type: WinMenuViev
-        },
-
-        hammerBuster: {
-            default: null,
-            type: cc. Node
-        },
-        
-    },  
-
-    onLoad () {
-// состояния игры
-        this.state = {  game: false, 
-                        mainMenu: true, 
-                        nextLevel: false, 
-                        winMenu: false,
-                        gameOver: false,
-                    };
-
-        Object.defineProperty(this.state, 'resetState', {
-            value: function(){
-                for (let state in this) {
-                    this[state] = false;
-                }
-            },
-            enumerable: false,
-        });
-// системные события игры
-        this.mousedown = 'mousedown';
-        this.mouseup = 'mouseup';
-        this.mousemove = 'mousemove';
-        this.mouseleave = 'mouseleave';
-        this.mouseenter = 'mouseenter';
-
-        if (cc.sys.platform === cc.sys.MOBILE_BROWSER) {
-             this.mousedown = 'touchstart';
-             this.mouseup = 'touchend';
-             this.mousemove = 'touchmove';
-             this.mouseleave = 'touchcancel';
-             this.mouseenter = 'touchstart';
-             this.activateGameEventHandler = this.activateGameTouchHandler;
-             this.disActivateGameEventHandler = this.disActivateGameTouchHandler;
-        }
-
-        this.fieldModel = new FieldModel(this, this.fieldViev);
-        this.fieldActions = new FieldActions(this, this.fieldViev);
-        this.passingModel = new PassingModel(this, this.passingViev);
-        this.mainMenuModel = new MainMenuModel(this, this.mainMenuViev);
-        this.nextLevelMenuModel = new NextLevelMenuModel (this, this.nextLevelMenuViev);
-        this.gameOverMenuModel = new GameOverMenuModel(this, this.gameOverMenuViev);
-        this.winMenuModel = new WinMenuModel(this, this.winMenuViev);
-
-        this.fieldModel.init();
-        this.fieldActions.init();
-        this.backGround.init();
-        this.passingModel.init();
-        this.mainMenuModel.init();
-        this.gameOverMenuModel.init();
-        this.nextLevelMenuModel.init();
-
+    fieldView: {
+      default: null,
+      type: FieldView,
     },
 
-    start(){
-        this.resetGameStates();
-        this.onMainMenu();
+    backGround: {
+      default: null,
+      type: BackGround,
     },
 
-    onGame(){
-        this.resetGameStates();
-        this.state.game = true;
-        this.onGameEvent();
+    passingView: {
+      default: null,
+      type: PassingView,
     },
 
-    offGame(){
-        this.state.game = false;
-        this.offGameEvent();
+    mainMenuView: {
+      default: null,
+      type: MainMenuView,
     },
 
-    onMainMenu(){
-        this.resetGameStates();
-        this.state.mainMenu = true;
-        this.mainMenuModel.enable();
-        this.onMainMenuEvent();
+    gameOverMenuView: {
+      default: null,
+      type: GameOverMenuView,
     },
 
-    onNextLevel(){
-        this.resetGameStates();
-        this.state.nextLevel = true;
-        this.passingModel.increaseLevel();
-        this.nextLevelMenuModel.enable();
-        this.onNextLevelMenuEvent();
+    nextLevelMenuView: {
+      default: null,
+      type: NextLevelMenuView,
     },
 
-    onGameOver(){
-        this.resetGameStates();
-        this.state.gameOver = true;
-        this.gameOverMenuModel.enable();
-        this.onGameOverMenuEvent();
+    winMenuView: {
+      default: null,
+      type: WinMenuView,
     },
 
-    onWinMenu(){
-        this.resetGameStates();
-        this.state.winMenu = true;
-        this.winMenuModel.enable();
-        this.onWinMenuEvent();
+    hammerBuster: {
+      default: null,
+      type: cc. Node,
     },
 
-    onGameEvent(){
-        this.state.game = true;     
-        this.fieldViev.node.on(this.mousedown, this.gameOnMouseDown, this);  
-    },
+  },
 
-    offGameEvent(){
-        this.fieldViev.node.off(this.mousedown, this.gameOnMouseDown, this);  
-    },
+  onLoad() {
+    this.cursorEvents = {
+      down: cc.Node.EventType.MOUSE_DOWN,
+      up: cc.Node.EventType.MOUSE_UP,
+      move: cc.Node.EventType.MOUSE_MOVE,
+      click: "click", // в докумнтации по кокос не обнаружила в явном виде енум для click...
 
-    onMainMenuEvent(){
-        this.mainMenuViev.playButton.node.on('click', this.onButtonPlay, this);  
-    },
+      //не используются на мобильных устройствах
+      enter: cc.Node.EventType.MOUSE_ENTER,
+      leave: cc.Node.EventType.MOUSE_LEAVE,
+    };
 
-    onNextLevelMenuEvent(){
-        this.nextLevelMenuViev.playButton.node.on('click', this.onButtonPlay, this);  
-    },
+    if (cc.sys.isMobile) {
+      this.cursorEvents.down = cc.Node.EventType.TOUCH_START;
+      this.cursorEvents.up = cc.Node.EventType.TOUCH_END;
+      this.cursorEvents.move = cc.Node.EventType.TOUCH_MOVE;
+      this.activateSwipeHandler = this.activateTouchSwipeHandler; 
+      this.disActivateSwipeHandler = this.disActivateTouchSwipeHandler;
+    }
 
-    onGameOverMenuEvent(){
-        this.gameOverMenuViev.restartButton.node.on('click', this.onRestartButton, this);
-        this.gameOverMenuViev.addMoviesBotton.node.on('click', this.onButtoAddMoviesAndPlay, this);  
-        this.gameOverMenuViev.exitBotton.node.on('click', this.onBottonExit, this);
-    },
+    // состояния игры
+    this.state = new GameStates();
 
-    onWinMenuEvent(){
-        this.winMenuViev.restartButton.node.on('click', this.onRestartButton, this);
-        this.winMenuViev.exitBotton.node.on('click', this.onBottonExit, this);
-    },
+    this.fieldModel = new FieldModel(this, this.fieldView);
+    this.fieldActions = new FieldActions(this, this.fieldView);
+    this.passingModel = new PassingModel(this, this.passingView);
+    this.mainMenuModel = new MainMenuModel(this, this.mainMenuView);
+    this.nextLevelMenuModel = new NextLevelMenuModel(this, this.nextLevelMenuView);
+    this.gameOverMenuModel = new GameOverMenuModel(this, this.gameOverMenuView);
+    this.winMenuModel = new WinMenuModel(this, this.winMenuView);
+    
+    this.fieldModel.init();
+    this.fieldActions.init();
+    this.backGround.init();
+    this.passingModel.init();
+    this.mainMenuModel.init();
+    this.gameOverMenuModel.init();
+    this.nextLevelMenuModel.init();
+  },
 
-    gameOnMouseDown(event){
-        if(event.target === event.currentTarget) return;
-        event.stopPropagation();
-        this.offGameEvent();
-        let target = event.target;
-        this.waitDublClick(target);
-        this.fieldActions.sprite1 = target;
-        this.activateGameEventHandler(target);
+  start() {
+    this.onMainMenu();
+  },
 
-    },
+  onGame() {
+    this.state.reset();
+    this.state.game = true;
+    this.onGameEvent();
+  },
 
-    waitDublClick(target){
-        target.on(this.mousedown, this.gameOnDublClick, this); 
-        setTimeout(()=> target.off(this.mousedown, this.gameOnDublClick, this), 300);
-    },
+  offGame() {
+    this.state.game = false;
+    this.offGameEvent();
+  },
 
-    gameOnDublClick(event){
-        let target = event.target;
-        this.disActivateGameEventHandler(target);
-        this.fieldActions.onDublClick(target);
-    },
+  onMenu(menu){ 
+    this.state.reset();
+    menu.state = true; 
+    menu.enable();
+  },
 
-    onMouseup(event){
-        this.disActivateGameEventHandler(this.fieldActions.sprite1);
-        this.fieldActions.sprite1 = null;
-        this.onGameEvent();
-    },
+  onMainMenu(){
+    this.onMenu(this.mainMenuModel);
+  },
 
-    activateGameEventHandler(target){
-        this.fieldViev.node.on(this.mouseup, this.onMouseup, this); 
-        this.fieldViev.node.on(this.mouseleave, this.onMouseup, this);
-        const sprites = this.fieldModel.getNeighborSprites(target);
-        sprites.forEach((sprite)=> {
-            sprite.on(this.mousemove, this.onMouseMove, this); 
-            }
-        )    
-    },
+  onNextLevelMenu(){
+    this.onMenu(this.nextLevelMenuModel);
+  },
 
-    disActivateGameEventHandler(target){
-        this.fieldViev.node.off(this.mouseup, this.onMouseup, this); 
-        this.fieldViev.node.off(this.mouseleave, this.onMouseup, this);
-        const sprites = this.fieldModel.getNeighborSprites(target);
-        sprites.forEach((sprite)=> {
-             sprite.off(this.mousemove, this.onMouseMove, this); 
-             }
-         )    
-     },
+  onWinMenu(){
+    this.onMenu(this.winMenuModel);
+  },
 
+  onGameOverMenu(){
+    this.onMenu(this.gameOverMenuModel);
+  },
 
-    activateGameTouchHandler(target){
-        cc.log("activateGameTouchHandler");
-        this.fieldViev.node.on(this.mouseup, this.onMouseup, this); 
-        this.fieldViev.node.on(this.mouseleave, this.onMouseup, this);
-        this.fieldViev.node.on(this.mousemove, this.fieldOnTouchMove, this);
-    },
+  onGameEvent() {
+    this.state.game = true;
+    this.fieldView.node.on(this.cursorEvents.down, this.gameOnMouseDown, this);
+  },
 
-    disActivateGameTouchHandler(target){
-        cc.log("disActivateGameTouchHandler");
-        this.fieldViev.node.off(this.mouseup, this.onMouseup, this); 
-        this.fieldViev.node.off(this.mouseleave, this.onMouseup, this);
-        this.fieldViev.node.off(this.mousemove, this.fieldOnTouchMove, this);
-         
-     },
+  offGameEvent() {
+    this.fieldView.node.off(this.cursorEvents.down, this.gameOnMouseDown, this);
+  },
 
-     onMouseMove(event){
-        this.disActivateGameEventHandler(this.fieldActions.sprite1)
-        let target = event.target;
-        this.fieldActions.sprite2 = target;
+  gameOnMouseDown(event) {
+    if (event.target === event.currentTarget) return;
+    event.stopPropagation();
+    let target = event.target;
+    this.offGameEvent();
+    this.onGameEvantHandler(target);
+  },
+
+  onGameEvantHandler(target) {
+    this.fieldActions.sprite1 = target;
+    this.activateSwipeHandler(target);
+    this.actevateDublClickHandler(target);
+    target.on(this.cursorEvents.up, this.activateAlternatePressingHandler, this);
+    this.fieldView.node.on(this.cursorEvents.up, this.offGameEvantHandlerAndReturnGameEvent, this);
+    this.fieldView.node.on(this.cursorEvents.leave, this.offGameEvantHandlerAndReturnGameEvent, this);
+  },
+
+  offGameEvantHandler() {
+    this.fieldView.node.off(this.cursorEvents.up, this.offGameEvantHandlerAndReturnGameEvent, this);
+    this.fieldView.node.off(this.cursorEvents.leave, this.offGameEvantHandlerAndReturnGameEvent, this);
+    this.disActivateSwipeHandler();
+    this.disActivateAlternatePressingHandler();
+    this.disActevateDublClickHandler();
+  },
+
+  offGameEvantHandlerAndReturnGameEvent() {
+    this.offGameEvantHandler();
+    this.onGameEvent();
+    this.fieldActions.sprite1 = null;
+  },
+
+  activateSwipeHandler(target) {
+    const sprites = this.fieldModel.getNeighborSprites(target);
+    sprites.forEach((sprite) => sprite.on(this.cursorEvents.move, this.onGameAction, this));
+  },
+
+  disActivateSwipeHandler() {
+    const target = this.fieldActions.sprite1;
+    if (!target) return;
+    const sprites = this.fieldModel.getNeighborSprites(target);
+    sprites.forEach((sprite) => {
+      sprite.off(this.cursorEvents.move, this.onGameAction, this);
+    });
+  },
+
+  activateTouchSwipeHandler(target) {
+    this.fieldView.node.on(this.cursorEvents.move, this.fieldOnTouchMove, this);
+  },
+
+  disActivateTouchSwipeHandler() {
+    this.fieldView.node.off(this.cursorEvents.move, this.fieldOnTouchMove, this);
+  },
+
+  actevateDublClickHandler(target) {
+    target.on(this.cursorEvents.down, this.gameOnDublClick, this);
+    setTimeout(() => target.off(this.cursorEvents.down, this.gameOnDublClick, this), 300);
+  },
+
+  disActevateDublClickHandler() {
+    const target = this.fieldActions.sprite1;
+    if (!target) return;
+    target.off(this.cursorEvents.down, this.gameOnDublClick, this);
+  },
+
+  gameOnDublClick(event) {
+    let target = event.target;
+    this.offGameEvantHandler();
+    this.fieldActions.onDublClick(target);
+  },
+
+  // включить слушатели для обработки поочередного выделения рядомстоящих элементов
+  activateAlternatePressingHandler(event) {
+    event.stopPropagation();
+    const target = event.target;
+    target.off(this.cursorEvents.up, this.activateAlternatePressingHandler, this);
+    this.disActivateSwipeHandler();
+    const neighborsSprites = this.fieldModel.getNeighborSprites(target);
+    neighborsSprites.forEach((sprite) => {
+      sprite.on(this.cursorEvents.down, this.onGameAction, this);
+    });
+    setTimeout(() => {
+      this.offGameEvantHandler();
+      this.onGame();
+    }, 1000);
+  },
+
+  disActivateAlternatePressingHandler() {
+    const target = this.fieldActions.sprite1;
+    if (!target) return;
+    target.off(this.cursorEvents.up, this.activateAlternatePressingHandler, this);
+    const sprites = this.fieldModel.getNeighborSprites(target);
+    sprites.forEach((sprite) => {
+      sprite.off(sprite.off(this.cursorEvents.down, this.onGameAction, this));
+    });
+  },
+
+  onGameAction(event) {
+    this.offGameEvantHandler();
+    let target = event.target;
+    this.fieldActions.sprite2 = target;
+    this.fieldActions.onSwipe();
+  },
+
+  fieldOnTouchMove(event) {
+    let target = event.target;
+    const sprites = this.fieldModel.getNeighborSprites(target);
+    const touchPosition = this.fieldView.node.convertToNodeSpaceAR(event.getLocation());
+    for (let i = 0; i < sprites.length; i++) {
+      if (sprites[i].getBoundingBox().contains(touchPosition)) {
+        this.disActivateSwipeHandler(target);
+        this.fieldActions.sprite2 = sprites[i];
         this.fieldActions.onSwipe();
-    },
+        return;
+      }
+    }
+  },
 
-    fieldOnTouchMove(event){
-        cc.log(" fieldOnTouchMove");
-        let target = event.target;
-        const sprites = this.fieldModel.getNeighborSprites(target);
-        var newVec2 = this.fieldViev.node.convertToNodeSpaceAR(event.getLocation());
-        for(let i = 0; i< sprites.length; i++){
-            if(sprites[i].getBoundingBox().contains(newVec2)){
-                this.disActivateGameEventHandler(target); 
-                this.fieldActions.sprite2 = sprites[i];
-                this.fieldActions.onSwipe();
-                return;
-            }
-        }
-    }, 
+  onFinishRebuild() {
+    if (this.state.gameOver) {
+      this.onGameOverMenu();
+      return;
+    }
+    if (this.state.nextLevel) {
+      this.onNextLevelMenu();
+      return;
+    }
+    if (this.state.winMenu) {
+      this.onWinMenu();
+      return;
+    }
+    this.onGameEvent();
+  },
 
-    onFinishRebuild(){
-        if(this.state.gameOver){
-            this.onGameOver();
-            return}
-        if(this.state.nextLevel){
-            this.onNextLevel();
-            return}
-        if(this.state.winMenu){
-            this.onWinMenu();
-            return}
-        this.onGameEvent();
-     },
+  updateGame() {
+    this.state.reset();
+    this.hammerBuster.getComponent("HammerBusterController").init();
+    this.passingModel.setLevel(0);
+    this.fieldActions.despawnSprites(this.fieldModel.getFieldSprites());
+    this.fieldActions.init();
+  },
 
-    onButtonPlay(){
-        this.onGame(); 
-    },
+  restart() {
+    this.updateGame();
+    this.onNextLevelMenu();
+  },
 
-    onButtoAddMoviesAndPlay(){
-        this.passingModel.changeMovies(5);
-        this.onGame();
-    },
-
-    onRestartButton(){
-        this.restartGame();
-    },
-
-    onBottonExit(){
-        this.resetGameStates();
-        this.restartGame();
-        this.onMainMenu();
-    },
-
-    restartGame(){
-        this.hammerBuster.getComponent('HammerBusterController').init();
-        this.gameOverMenuModel.disable();
-        this.passingModel.setLevel(1);
-        this.fieldActions.despawnSprites(this.fieldModel.getFieldSprites());
-        this.fieldActions.init();
-        this.onGame();
-    },
-
-    resetGameStates(){
-        this.offGameEvent();
-        this.mainMenuModel.disable();
-        this.gameOverMenuModel.disable();
-        this.nextLevelMenuModel.disable();
-        this.winMenuModel.disable();
-        this.state.resetState();
-    },
-
-
+  exit() {
+    this.updateGame();
+    this.onMainMenu();
+  }
 
 });

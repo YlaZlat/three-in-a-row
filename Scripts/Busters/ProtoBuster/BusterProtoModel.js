@@ -1,37 +1,36 @@
 const BusterProtoModel = cc.Class({
 
-    ctor: function (controller, viev) {
-        this.viev = viev;
-        this.controller = controller;
-        this.passingModel = this.controller.passingModel;
-        this.fieldModel = this.controller.fieldModel;
-        this.num;
-        this.initNum  = 0;
-    },
+  ctor: function (controller, view) {
+    this.view = view;
+    this.controller = controller;
+    this.passingModel = this.controller.passingModel;
+    this.fieldModel = this.controller.fieldModel;
+    this.num;
+    this.initNum = 0;
+  },
 
-    init(){
-        this.num = this.initNum;
-        this.viev.displayNum(this.num);
-        this.viev.setNumLabelNormalColor();
-        this.viev.enable();
-    },
+  init() {
+    this.num = this.initNum;
+    this.view.displayNum(this.num);
+    this.view.setNumLabelNormalColor();
+    this.view.enable();
+  },
 
-    setNumNormalColor(){
-        this.viev.setNumLabelNormalColor();
-    },
+  setNumNormalColor() {
+    this.view.setNumLabelNormalColor();
+  },
 
-    setNumWarningColor(){
-        this.viev.setNumLabelWarningColor();
-    },
+  setNumWarningColor() {
+    this.view.setNumLabelWarningColor();
+  },
 
-    getBuster(){
-        cc.log("Определите метод!");
-        if(this.num < 1){
-            return;
-        }
-    },
+  getBuster() {
+    cc.log("Определите метод!");
+    if (this.num < 1) {
+      return;
+    }
+  },
 
-   
 });
 
 module.exports = BusterProtoModel;
