@@ -5,7 +5,6 @@ const FieldModel = cc.Class({
     this.controller = controller;
 
     this.fieldMatrix = [
-
       [1, 0, 1, 0, 1],
       [0, 1, 0, 1, 0],
       [1, 0, 1, 0, 1],
@@ -25,19 +24,12 @@ const FieldModel = cc.Class({
     this.fieldCells = [];
     this.columnsHeight = [];
 
-    this.cellSide = {  // cellSide
+    this.cellSide = {  
       UP: {rowDisplaced: 1, columnDisplaced: 0}, 
       DOWN: {rowDisplaced: -1, columnDisplaced: 0},
       RIGHT: {rowDisplaced: 0, columnDisplaced: 1},
       LEFT: {rowDisplaced: 0, columnDisplaced: -1}
     }
-
-    this.direction = {
-      VERTICAL: "vertical",
-      HORIZONTAL: "horizontal",
-      DUAL: "dual",
-      UNKNOWN: "unknown"
-    };
 
     this.spriteState = {
       NORMAL: "normal",
@@ -54,6 +46,8 @@ const FieldModel = cc.Class({
     this.createField();
     this.setColumnsHeight();
     this.view.createChipsPool(this.fieldCells.length);
+    //
+    //this.getDisplacedCell = this.getDisplacedCell.bind(this);
   },
 
   setInitRenderFieldParameters(parameters) {
@@ -64,7 +58,7 @@ const FieldModel = cc.Class({
     const matrix = this.fieldMatrix;
     this.fieldCells = [];
     let shift = this.cellSize / 2;
-    for (let r = matrix.length - 1 ; r >= 0; r--) {
+    for (let r = matrix.length - 1; r >= 0; r--) {
       let row = [];
       for (let c = 0; c < matrix[r].length; c++) {
         let cell = {};
@@ -83,13 +77,12 @@ const FieldModel = cc.Class({
 
   setColumnsHeight() {
     let columnsHeight = [];
-    for (let r = 0; r < this.fieldCells.length; r++) {
-      for (let c = 0; c < this.fieldCells[r].length; c++) {
-        if (columnsHeight[c])columnsHeight[c] = r + 1;
-        else columnsHeight.push(r + 1);
+    for (let row = 0; row < this.fieldCells.length; row++) {
+      for (let col = 0; col < this.fieldCells[row].length; col++) {
+        if (columnsHeight[col])columnsHeight[col] = row + 1;
+        else columnsHeight.push(row + 1);
       }
     }
-
     this.columnsHeight = columnsHeight;
   },
 
@@ -112,42 +105,42 @@ const FieldModel = cc.Class({
     sprite.cell = cell;
   },
 
-  // функция для проверки готовых коминаций при заполнении поля
-  checkMatches(row, column, colorIndex) {
-    if (column > 1) {
-      let privInRowColorIndex1 = this.fieldCells[row][column - 1].sprite.colorIndex;
-      let privInRowColorIndex2 = this.fieldCells[row][column - 2].sprite.colorIndex;
 
-      if (colorIndex === privInRowColorIndex1 && colorIndex === privInRowColorIndex2) {
-        colorIndex = (colorIndex + 1) % this.spriteColors.length;
-      }
+  checkToSide(cell,  side, targetClor) {
+  let group = [];
+  check = check.bind(this);
+  function check(cell,  side, targetClor) {
+    let nextCell = this.getDisplacedCell(cell, side.rowDisplaced, side.columnDisplaced); 
+    if (!nextCell) return ;
+    let nextSprite = nextCell.sprite;
+    if (!nextSprite) return ;
+    if (nextSprite.colorIndex === targetClor) {
+      group.push(nextSprite);
+      check(nextCell, side, targetClor);
     }
-
-    if (row > 1 && this.fieldCells[row - 2][column]) {
-      let privInColColorIndex1 = this.fieldCells[row - 1][column].sprite.colorIndex;
-      let privInColColorIndex2 = this.fieldCells[row - 2][column].sprite.colorIndex;
-
-      if (colorIndex === privInColColorIndex1 && colorIndex === privInColColorIndex2) {
-        colorIndex = (colorIndex + 1) % this.spriteColors.length;
-      }
-    }
-
-    return colorIndex;
+  }
+  check(cell,  side, targetClor);
+  return group;
   },
 
   fillFieldWithSprites() {
     const fieldCells = this.fieldCells;
     let sprites = [];
-    for (let r = 0; r < fieldCells.length; r++) {
-      for (let c = 0; c < fieldCells[r].length; c++) {
-        const cell = fieldCells[r][c];
+    for (let row = 0; row < fieldCells.length; row++) {
+      for (let col = 0; col < fieldCells[row].length; col++) {
+        const cell = fieldCells[row][col];
         if (!cell.sprite) {
           let sprite = this.view.spawnNewChip();
-          let colorIndex = this.getRondomColor();
-          sprite.state = this.spriteState.NORMAL; 
-          colorIndex = this.checkMatches(r, c, colorIndex);
-          this.setSpriteColor(sprite, colorIndex);
           this.setSpriteToInitPosition(cell, sprite);
+          let colorIndex = this.getRondomColor();
+          sprite.colorIndex = colorIndex;
+          while (this.findSameColorGroup(sprite)) {
+            colorIndex = (colorIndex + 1) % this.spriteColors.length;
+            sprite.colorIndex = colorIndex;
+          }
+          sprite.state = this.spriteState.NORMAL; 
+          this.setSpriteColor(sprite, colorIndex);
+          
           sprites.push(sprite);
           sprite.on(this.controller.cursorEvents.down, function () {});
         }
@@ -160,9 +153,9 @@ const FieldModel = cc.Class({
   getFieldSprites() {
     const arr = this.fieldCells;
     let sprites = [];
-    for (let r = 0; r < arr.length; r++) {
-      for (let c = 0; c < arr[r].length; c++) {
-        let sprite = arr[r][c].sprite;
+    for (let row = 0; row < arr.length; row++) {
+      for (let col = 0; col < arr[r].length; col++) {
+        let sprite = arr[row][col].sprite;
         if (sprite) sprites.push(sprite);
       }
     }
@@ -173,9 +166,9 @@ const FieldModel = cc.Class({
     const arr = this.fieldCells;
     let sprites = [];
 
-    for (let r = 0; r < arr.length; r++) {
-      for (let c = 0; c < arr[r].length; c++) {
-        let sprite = arr[r][c].sprite;
+    for (let row = 0; row < arr.length; row++) {
+      for (let col = 0; col < arr[row].length; col++) {
+        let sprite = arr[row][col].sprite;
         if (sprite && sprite.colorIndex === colorIndex) sprites.push(sprite);
       }
     }
@@ -270,64 +263,38 @@ const FieldModel = cc.Class({
   },
 
   // найти образует ли спрайт комбинации 3 в ряд и вернуть объект с информацией о этих комбинациях
-  findSameColorGroup(sprite) {
+  findSameColorGroup (sprite) {
     const sameColor = sprite.colorIndex;
     const cell = sprite.cell;
-    const verticalGroup = [];
-    const horizontalGroup = [];
+    let verticalGroup = [];
+    let horizontalGroup = [];
     let minGroup = this.minGroup - 1; // так как целевой спрайт возвращаем отдельно от группы
-
-    function checkToSide(cell,  side) {
-      let nextCell = this.getDisplacedCell(cell, side.rowDisplaced, side.columnDisplaced); 
-      if (!nextCell) return;
-      let nextSprite = nextCell.sprite;
-      if (!nextSprite) return;
-      if (nextSprite.colorIndex === sameColor) {
-        if (side === this.cellSide.UP || side === this.cellSide.DOWN) verticalGroup.push(nextSprite);
-        if (side === this.cellSide.RIGHT || side === this.cellSide.LEFT) horizontalGroup.push(nextSprite);
-        checkToSide(nextCell, side);
-      }
-    }
-
     this.getDisplacedCell = this.getDisplacedCell.bind(this);
-    checkToSide = checkToSide.bind(this);
-
-    checkToSide(cell, this.cellSide.UP);
-    checkToSide(cell, this.cellSide.DOWN);
-    checkToSide(cell, this.cellSide.RIGHT);
-    checkToSide(cell, this.cellSide.LEFT);
-
-    if (verticalGroup.length < minGroup && horizontalGroup.length < minGroup) return false;
-
+    this.checkToSide = this.checkToSide.bind(this);
+    let upGroup = this.checkToSide(cell, this.cellSide.UP, sameColor);
+    let downGroup = this.checkToSide(cell, this.cellSide.DOWN, sameColor);
+    let rightGroup = this.checkToSide(cell, this.cellSide.RIGHT, sameColor);
+    let leftGroup = this.checkToSide(cell, this.cellSide.LEFT, sameColor);
+    verticalGroup = verticalGroup.concat(upGroup).concat(downGroup);
+    horizontalGroup = horizontalGroup.concat(rightGroup).concat(leftGroup);
+    if(verticalGroup.length < minGroup) verticalGroup = [];
+    if(horizontalGroup.length < minGroup) horizontalGroup = [];
+    let group = verticalGroup.concat(horizontalGroup);
+    if (verticalGroup.length < minGroup && horizontalGroup.length < minGroup) {
+      return false;
+    }
     let groupInformation = {
       target: sprite,
-      group: [],
+      verticalGroup: verticalGroup,
+      horizontalGroup: horizontalGroup,
+      group: group,
+      length: group.length + 1,
       color: sameColor,
-      direction: this.direction.UNKNOWN,
     };
 
-    if (verticalGroup.length >= minGroup && horizontalGroup.length >= minGroup) {
-      const group = verticalGroup.concat(horizontalGroup);
-      groupInformation.group = group;
-      groupInformation.length = group.length + 1;
-      groupInformation.direction = this.direction.DUAL;
-      return groupInformation;
-    }
-
-    if (verticalGroup.length >= minGroup) {
-      groupInformation.group = verticalGroup;
-      groupInformation.direction = this.direction.VERTICAL;
-      groupInformation.length = verticalGroup.length + 1;
-      return groupInformation;
-    }
-
-    if (horizontalGroup.length >= minGroup) {
-      groupInformation.group = horizontalGroup;
-      groupInformation.direction = this.direction.HORIZONTAL;
-      groupInformation.length = horizontalGroup.length + 1;
-      return groupInformation;
-    }
+    return groupInformation ;
   },
+  
 
   getSpriteCell(sprite) {
     const arr = this.fieldCells;
@@ -341,7 +308,6 @@ const FieldModel = cc.Class({
   findMatchesInField: function () {
     let matchGroups = []; // массив из найденных групп
     const arr = this.fieldCells;
-    this.maxFallTime = Math.sqrt(2 * this.currentMaxFallHaight / this.fallingAccel);
     for (let r = 0; r < arr.length; r++) {
       for (let c = 0; c < arr[r].length; c++) {
         const sprite = arr[r][c].sprite;

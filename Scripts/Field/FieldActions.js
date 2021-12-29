@@ -164,26 +164,28 @@ const FieldActions = cc.Class({
     let group = groupInformation.group;
     return this.collectСhips(group, target)
       .then((group) => {
-        if (groupInformation.length < 4 || groupInformation.direction === this.direction.DUAL) {
+        if (groupInformation.length < 4 || (groupInformation.verticalGroup.length && groupInformation.horizontalGroup.length)) {
           this.despawnSprites([...group, target], target);
+          return group;
         }
 
         if (groupInformation.length === 4) {
           this.despawnSprites(group, target);
-          if (groupInformation.direction === this.direction.VERTICAL) {
+          if (groupInformation.verticalGroup.length) {
             this.changeSpriteState(target, this.spriteState.VERTICAL_STACK)
           };
-          if (groupInformation.direction === this.direction.HORIZONTAL) {
+          if (groupInformation.horizontalGroup.length) {
             this.changeSpriteState(target, this.spriteState.HORIZONTAL_STACK)
           };
+          return group;
         }
 
-        if (groupInformation.length > 4 && groupInformation.direction !== this.direction.DUAL) {
+        if (groupInformation.length > 4) {
           this.despawnSprites(group, target);
           this.changeSpriteState(target, this.spriteState.RAINBOW_BALL);
+          return group;
         }
-
-        return group;
+        return false;
       });
   },
 
@@ -207,14 +209,14 @@ const FieldActions = cc.Class({
     if (target.state === this.spriteState.VERTICAL_STACK) {
       let col = target.cell.col;
       group = this.fieldModel.getColSprites(col);
-      if (groupInformation.direction === this.direction.HORIZONTAL) {
+      if (groupInformation.horizontalGroup && groupInformation.horizontalGroup.length) {
         group = group.concat(groupInformation.group);
       }
     }
     if (target.state === this.spriteState.HORIZONTAL_STACK) {
       let row = target.cell.row;
       group = this.fieldModel.getRowSprites(row);
-      if (groupInformation.direction === this.direction.VERTICAL) {
+      if (groupInformation.verticalGroup && groupInformation.verticalGroup.length) {
         group = group.concat(groupInformation.group);
       }
     }

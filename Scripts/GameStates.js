@@ -10,7 +10,9 @@ const GameStates = cc.Class({
 
   reset() {
     for (const state in this) {
-      if (typeof this[state] === "boolean") this[state] = false;
+      if (typeof this[state] === "boolean") {
+        this[state] = false;
+      }
     }
   },
 

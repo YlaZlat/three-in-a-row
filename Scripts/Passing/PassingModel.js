@@ -70,7 +70,9 @@ const PassingModel = cc.Class({
 
   changeMovies(n) {
     this.levelMovies += n;
-    if (this.levelScore < this.requiredLevelScore && this.levelMovies < 1) this.controller.state.gameOver = true;
+    if (this.levelScore < this.requiredLevelScore && this.levelMovies < 1) {
+      this.controller.state.gameOver = true;
+    }
     this.view.displayMovies(this.levelMovies);
   },
 
@@ -81,7 +83,9 @@ const PassingModel = cc.Class({
     this.view.displayLevelScore(this.levelScore, this.requiredLevelScore);
     this.view.createScoreAnim(num, pos);
 
-    if (this.levelScore < this.requiredLevelScore && this.levelMovies < 1) this.controller.state.gameOver = true;
+    if (this.levelScore < this.requiredLevelScore && this.levelMovies < 1) {
+      this.controller.state.gameOver = true;
+    }
     if (this.level === this.maxLevel && this.levelScore >= this.requiredLevelScore) {
       this.controller.state.winMenu = true;
       return;
