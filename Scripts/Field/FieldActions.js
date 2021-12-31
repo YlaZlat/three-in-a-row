@@ -264,14 +264,14 @@ const FieldActions = cc.Class({
         }
       });
 
-      if (sprite.state === this.spriteState.NORMAL) {
+      if (groupInformation.target.state === this.spriteState.NORMAL) {
         this.normalGroupAction(groupInformation)
           .then((group) => {
             resolve(group);
-          });
+          });groupInformation.target
       }
 
-      if (sprite.state === this.spriteState.VERTICAL_STACK || sprite.state === this.spriteState.HORIZONTAL_STACK) {
+      if (groupInformation.target.state === this.spriteState.VERTICAL_STACK || groupInformation.target.state === this.spriteState.HORIZONTAL_STACK) {
         this.stackGroupAction(groupInformation)
           .then((group) => {
             resolve(group);
